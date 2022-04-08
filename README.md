@@ -76,10 +76,10 @@ small enough to limit the duration of the test to a few seconds.
 
 ## MSEND
 
-msend usage: msend [-1|2|3|4|5] [-b burst_count] [-d] [-h] [-l loops] [-m msg_len] [-n num_bursts] [-p pause] [-P payload] [-q] [-s stat_pause] [-S Sndbuf_size] group port [ttl] [interface]
+````
+Usage: msend [-1|2|3|4|5] [-b burst_count] [-d] [-h] [-l loops] [-m msg_len] [-n num_bursts] [-p pause] [-P payload] [-q] [-s stat_pause] [-S Sndbuf_size] group port [ttl] [interface]
 
 Where:
-
   -1 : pre-load opts for basic connectivity (1 short msg per sec for 10 min)
   -2 : pre-load opts for long msg len (1 5k msg each sec for 5 seconds)
   -3 : pre-load opts for moderate load (bursts of 100 8K msgs for 5 seconds)
@@ -104,12 +104,14 @@ Where:
   port : destination port (required)
   ttl : time-to-live (limits transition through routers) [2]
   interface : optional IP addr of local interface (for multi-homed hosts)
+````
 
 ## MDUMP
-mdump usage: mdump [-h] [-q] [-Q Quiet_lvl] [-r rcvbuf_size] [-p pause_ms/num] [-v] [-s] group port [interface]
+
+````
+Usage: mdump [-h] [-q] [-Q Quiet_lvl] [-r rcvbuf_size] [-p pause_ms/num] [-v] [-s] group port [interface]
 
 Where:
-
   -h : help
   -o ofile : print results to file (in addition to stdout)
   -p pause_ms[/num] : milliseconds to pause after each receive [0: no pause]
@@ -128,13 +130,14 @@ Where:
   group : multicast address to receive (required, use '0.0.0.0' for unicast)
   port : destination port (required)
   interface : optional IP addr of local interface (for multi-homed hosts) [INADDR_ANY]
+````
 
 ## MPONG
 
-mpong Usage: ./mtools/FreeBSD-6-i386/mpong [-h] [-i] [-o ofile] [-r rcvbuf_size] [-S Sndbuf_size] [-s samples] [-v] group port [ttl] [interface]
+````
+Usage: ./mtools/FreeBSD-6-i386/mpong [-h] [-i] [-o ofile] [-r rcvbuf_size] [-S Sndbuf_size] [-s samples] [-v] group port [ttl] [interface]
 
 Where:
-
   -h : help
   -i : initiator (sends first packet) [reflector]
   -o ofile : print results to file (in addition to stdout)
@@ -148,6 +151,7 @@ Where:
   group : multicast address to send on (use '0.0.0.0' for unicast)
   port : destination port
   interface : optional IP addr of local interface (for multi-homed hosts) [INADDR_ANY]
+````
 
 Note: initiator sends on supplied port + 1, reflector replies on supplied port.
 
@@ -192,7 +196,7 @@ The "msend" command has an optional forth positional
 parameter which is the IP address of the desired network interface.
 The "mdump" command also can specify a network interface
 as its third positional parameter.  This parameter is only needed on a
-multi-homed host (machine with more than one network interface).  With
+multi-homed host (host with more than one network interface).  With
 normal unicast destination addresses, IP uses routing tables to determine
 the correct interface to send packets.  With multicast, there is no
 "correct" interface - the application should specify which interface
@@ -207,8 +211,8 @@ and therefore do not require the interface.
 The "mdump" command attempts to set its socket
 to have a 4 MB UDP receive buffer.  Many operating systems
 will not grant a request that large (the tool will inform you how large
-a buffer it was able to get).  However, if your sending machine
-is a reasonably high-power machine, the receiver may very well need
+a buffer it was able to get).  However, if your sending host
+is a reasonably high-power host, the receiver may very well need
 a large receive buffer.  You can use the "netstat" command (usually with
 the "-s" option) to see UDP statistics, including packets dropped due
 to the receive buffer overflowing.  If you consistently get loss with
@@ -221,18 +225,18 @@ a 64 KB UDP send buffer.  Many operating systems
 will not grant a request that large (the tool will inform you how large
 a buffer it was able to get).  However, we have found that especially when
 sending fairly large datagrams, less than 64 KB of send buffer prevents the
-sending machine from reaching its maximum send rate.  In fact, if your
+sending host from reaching its maximum send rate.  In fact, if your
 sending datagrams are themselves approaching 64 KB in size, you may need an
 even larger send buffer, perhaps three times the maximum datagram size.
 However, due to a possible bug in Linux, you should not set your send
 socket buffer more than 192 KB (196608).
 
 Finally, it is very possible to experience loss due to a sufficiently-large
-capability mismatch between the sending and receiving machines.  It might be
-because the sending machine has a faster network interface than the receiving
-machine, or a faster CPU, or an operating system that is more efficient
+capability mismatch between the sending and receiving hosts.  It might be
+because the sending host has a faster network interface than the receiving
+host, or a faster CPU, or an operating system that is more efficient
 at processing UDP.  For the purposes of evaluating your network, it is
-suggested that the sending and receiving machines be as closely-matched
+suggested that the sending and receiving hosts be as closely-matched
 as possible.
 
 ## TEST 1
@@ -244,10 +248,14 @@ timeouts.  Start the "mdump" first, then after a second
 or two start the "msend".
 
 Receiving Host:
-  mdump -omdump1.log 224.9.10.11 12965 10.1.2.3
+````
+mdump -omdump1.log 224.9.10.11 12965 10.1.2.3
+````
 
 Sending Host:
-  msend -1 224.9.10.11 12965 15 10.1.2.4
+````
+msend -1 224.9.10.11 12965 15 10.1.2.4
+````
 
 (Note: host interface addresses 10.1.2.* should be changed to reflect your
 hosts.)
@@ -271,10 +279,14 @@ fragmented datagram.  Start the "mdump" first, then after
 a second or two start the "msend".
 
 Receiving Host:
-  mdump -q -omdump2.log 224.10.10.10 14400 10.1.2.3
+````
+mdump -q -omdump2.log 224.10.10.10 14400 10.1.2.3
+````
 
 Sending Host:
-  msend -2 224.10.10.10 14400 15 10.1.2.4
+````
+msend -2 224.10.10.10 14400 15 10.1.2.4
+````
 
 (Note: host interface addresses 10.1.2.* should be changed to reflect your
 hosts.)
@@ -290,7 +302,7 @@ run.
 ## TEST 3
 
 Test 3 sends 50 bursts of 100 datagrams (8K each).  Each burst of 100 is sent
-at the maximum possible send rate for the machine usually fully saturating
+at the maximum possible send rate for the host usually fully saturating
 the wire), and the bursts are separated by a tenth of a second.
 This is a pretty heavy load that tests the ability of the network hardware
 to establish a wire-speed multicast stream from a fragmented datagram.
@@ -298,14 +310,18 @@ Start the "mdump" first, then after
 a second or two start the "msend".
 
 Receiving Host:
-  mdump -q -omdump3.log 224.10.10.14 14400 10.1.2.3
+````
+mdump -q -omdump3.log 224.10.10.14 14400 10.1.2.3
+````
 
 Sending Host:
-  msend -3 224.10.10.14 14400 14 10.1.2.4
+````
+msend -3 224.10.10.14 14400 14 10.1.2.4
+````
 
 (Note: host interface addresses 10.1.2.* should be changed to reflect your
 hosts.)
-Depending on the speed of the machine, this test should not run
+Depending on the speed of the host, this test should not run
 much longer than 7 seconds, usually much shorter.
 
 Be sure to run the test a second time, switching the roles of sender and
@@ -315,7 +331,7 @@ run.
 ## TEST 4
 
 Test 4 sends a single burst of 5000 datagrams (20 bytes each).  The burst is
-sent at the maximum possible send rate for the machine.  It may not
+sent at the maximum possible send rate for the host.  It may not
 fully saturate the wire, but does lead to a very high message rate
 during the burst.
 This is a another heavy load that tests the ability of the network hardware
@@ -324,14 +340,18 @@ Start the "mdump" first, then after
 a second or two start the "msend".
 
 Receiving Host:
-  mdump -q -omdump4.log 224.10.10.18 14400 10.1.2.3
+````
+mdump -q -omdump4.log 224.10.10.18 14400 10.1.2.3
+````
 
 Sending Host:
-  msend -4 224.10.10.18 14400 15 10.1.2.4
+````
+msend -4 224.10.10.18 14400 15 10.1.2.4
+````
 
 (Note: host interface addresses 10.1.2.* should be changed to reflect your
 hosts.)
-Depending on the speed of the sending machine, this test should not
+Depending on the speed of the sending host, this test should not
 run much more than 5 seconds, often much less.
 
 Be sure to run the test a second time, switching the roles of sender and
@@ -341,21 +361,25 @@ run.
 ## TEST 5
 
 Test 5 sends a single burst of 50,000 datagrams (800 bytes each).  The burst
-is sent at the maximum possible send rate for the machine.
+is sent at the maximum possible send rate for the host.
 This test generates the heaviest load of the 5 tests, and should saturate
 a 1-gig link.
 Start the "mdump" first, then after
 a second or two start the "msend".
 
 Receiving Host:
-  mdump -q -omdump5.log 224.10.10.18 14400 10.1.2.3
+````
+mdump -q -omdump5.log 224.10.10.18 14400 10.1.2.3
+````
 
 Sending Host:
-  msend -5 224.10.10.18 14400 15 10.1.2.4
+````
+msend -5 224.10.10.18 14400 15 10.1.2.4
+````
 
 (Note: host interface addresses 10.1.2.* should be changed to reflect your
 hosts.)
-Depending on the speed of the sending machine, this test should not
+Depending on the speed of the sending host, this test should not
 run much more than 5 seconds, often much less.
 
 If this test experiences loss, re-run the msend command with the option
@@ -401,7 +425,7 @@ scaling advantages of multicast are well worth the effort.
 ## MPONG NOTES
 
 The "mpong" commad can be used to get a very rough idea of the
-round-trip latency between two machines.  However, be aware that this tool
+round-trip latency between two hosts.  However, be aware that this tool
 does not contain optimizations which could further decrease latencies; for
 example, it does not set CPU affinity or modify thread priority.  It also does
 not contain logic to detect lost packets and retransmit them.  Nor does it
@@ -411,16 +435,20 @@ However, the tool can still be useful in reproducing latency problems with a
 simple tool which can be provided in source form to support organizations
 for diagnosis.  For example:
 
-MACHINE 1:
-  mpong 224.1.3.5 12000
+Host 1:
+````
+mpong 224.1.3.5 12000
+````
 
-MACHINE 2:
-  mpong -iv -ompong.raw 224.1.3.5 12000
+Host 2:
+````
+mpong -iv -ompong.raw 224.1.3.5 12000
+````
 
-Machine 2, the
+Host 2, the
 initiator ("-i") will start the test by sending a packet to
-Machine 1, the reflector, over group 224.1.3.5 port 12001.
-The packet will contain the sending timestamp.  Machine 1 will receive it and
+Host 1, the reflector, over group 224.1.3.5 port 12001.
+The packet will contain the sending timestamp.  Host 1 will receive it and
 send it back (reflect) over the same group but with port 12000.
 This is one round-trip cycle.  The first 20 cycles are for "warm-up", followed
 by the measurement phase, consisting of 65536 (default) cycles.  The initiator
