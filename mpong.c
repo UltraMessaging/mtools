@@ -1,7 +1,7 @@
 /* mpong.c */
 /*   Program to do ping-pong round-trip latency measurements using
  * multicast.
- * See https://community.informatica.com/solutions/1470 for more info.
+ * See https://github.com/UltraMessaging/mtools
  *
  * Author: 29West/Informatica (with small parts of the code borrowed
  * from J.P.Knight@lut.ac.uk's "mdump" program)
@@ -36,8 +36,7 @@ extern char *toptarg;
 int tgetopt(int nargc, char * const *nargv, const char *ostr);
 
 #if defined(_WIN32)
-// Windows-only includes
-#include <windows.h>
+/* Windows-only includes */
 #include <winsock2.h>
 typedef unsigned long socklen_t;
 #define SLEEP_SEC(s) Sleep((s) * 1000)
@@ -51,7 +50,7 @@ typedef unsigned long socklen_t;
 #define perror(x) fprintf(stderr,"%s: %d\n",x,GetLastError())
 
 #else
-// Unix-only includes
+/* Unix-only includes */
 #define HAVE_PTHREAD_H
 #include <signal.h>
 #include <unistd.h>

@@ -1,7 +1,7 @@
 /* msend.c */
 /*   Program to send multicast packets in flexible ways to test multicast
  * networks.
- * See https://community.informatica.com/solutions/1470 for more info.
+ * See https://github.com/UltraMessaging/mtools
  *
  * Authors: The fine folks at 29West/Informatica
  *
@@ -35,8 +35,7 @@ extern char *toptarg;
 int tgetopt(int nargc, char * const *nargv, const char *ostr);
 
 #if defined(_MSC_VER)
-// Windows-only includes
-#include <windows.h>
+/* Windows-only includes */
 #include <winsock2.h>
 typedef unsigned long socklen_t;
 #define SLEEP_SEC(s) Sleep((s) * 1000)
@@ -46,7 +45,7 @@ typedef unsigned long socklen_t;
 #define TLONGLONG signed __int64
 
 #else
-// Unix-only includes
+/* Unix-only includes */
 #define HAVE_PTHREAD_H
 #include <signal.h>
 #include <unistd.h>

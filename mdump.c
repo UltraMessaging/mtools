@@ -2,7 +2,7 @@
 /*   Program to dump the contents of all datagrams arriving on a specified
  * multicast address and port.  The dump gives both the hex and ASCII
  * equivalents of the datagram payload.
- * See https://community.informatica.com/solutions/1470 for more info
+ * See https://github.com/UltraMessaging/mtools
  *
  * Author: J.P.Knight@lut.ac.uk (heavily modified by 29West/Informatica)
  *
@@ -36,8 +36,7 @@ extern char *toptarg;
 int tgetopt(int nargc, char * const *nargv, const char *ostr);
 
 #if defined(_MSC_VER)
-// Windows-only includes
-#include <windows.h>
+/* Windows-only includes */
 #include <winsock2.h>
 typedef unsigned long socklen_t;
 #define SLEEP_SEC(s) Sleep((s) * 1000)
@@ -47,7 +46,7 @@ typedef unsigned long socklen_t;
 #define TLONGLONG signed __int64
 
 #else
-// Unix-only includes
+/* Unix-only includes */
 #define HAVE_PTHREAD_H
 #include <signal.h>
 #include <unistd.h>

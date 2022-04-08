@@ -1,4 +1,4 @@
-$! Command file to build mtools
+$! bld_vms.com - Command file to build mtools on VMS.
 $ CFLAGS := /define=HAVE_CONFIG_H/names=(as_is,shortened)/debug/noopt
 $ LDFLAGS := /threads_enable/map/debug
 $!
