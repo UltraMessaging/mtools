@@ -1,7 +1,8 @@
 /* msend.c */
 /*   Program to send multicast packets in flexible ways to test multicast
  * networks.
- * See https://github.com/UltraMessaging/mtools
+ *
+ * Project home: https://github.com/UltraMessaging/mtools
  *
  * Authors: The fine folks at 29West/Informatica
  *
@@ -24,6 +25,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#if defined(_WIN32)
+#define snprintf _snprintf
+#endif
 
 /* Many of the following definitions are intended to make it easier to write
  * portable code between windows and unix. */
@@ -387,7 +392,7 @@ int main(int argc, char **argv)
 		groupaddr = inet_addr(argv[toptind]);
 		groupport = (unsigned short)atoi(argv[toptind+1]);
 		if (o_quiet < 2)
-			sprintf(equiv_cmd, "msend -b%d%s-m%d -n%d -p%d%s-s%d -S%d%s%s %s",
+			snprintf(equiv_cmd, sizeof(equiv_cmd), "msend -b%d%s-m%d -n%d -p%d%s-s%d -S%d%s%s %s",
 				o_burst_count, (o_decimal)?" -d ":" ", o_msg_len, o_num_bursts,
 				o_pause, o_quiet_equiv_opt, o_stat_pause, o_Sndbuf_size,
 				(o_tcp) ? " -t " : ((o_unicast_udp) ? " -u " : " "),
@@ -406,7 +411,7 @@ int main(int argc, char **argv)
 		}
 		ttlvar = (unsigned char)atoi(argv[toptind+2]);
 		if (o_quiet < 2)
-			sprintf(equiv_cmd, "msend -b%d%s-m%d -n%d -p%d%s-s%d -S%d%s%s %s %s",
+			snprintf(equiv_cmd, sizeof(equiv_cmd), "msend -b%d%s-m%d -n%d -p%d%s-s%d -S%d%s%s %s %s",
 				o_burst_count, (o_decimal)?" -d ":" ", o_msg_len, o_num_bursts,
 				o_pause, o_quiet_equiv_opt, o_stat_pause, o_Sndbuf_size,
 				(o_tcp) ? " -t " : ((o_unicast_udp) ? " -u " : " "),
@@ -419,7 +424,7 @@ int main(int argc, char **argv)
 		ttlvar = (unsigned char)atoi(argv[toptind+2]);
 		bind_if = argv[toptind+3];
 		if (o_quiet < 2)
-			sprintf(equiv_cmd, "msend -b%d%s-m%d -n%d -p%d%s-s%d -S%d%s%s %s %s %s",
+			snprintf(equiv_cmd, sizeof(equiv_cmd), "msend -b%d%s-m%d -n%d -p%d%s-s%d -S%d%s%s %s %s %s",
 				o_burst_count, (o_decimal)?" -d ":" ", o_msg_len, o_num_bursts,
 				o_pause, o_quiet_equiv_opt, o_stat_pause, o_Sndbuf_size,
 				(o_tcp) ? " -t " : ((o_unicast_udp) ? " -u " : " "),
@@ -529,9 +534,9 @@ MAIN_LOOP:
 
 	/* 1st msg: give network hardware time to establish mcast flow */
 	if (test_num >= 0)
-		sprintf(cmdbuf, "echo test %d, sender equiv cmd %s", test_num, equiv_cmd);
+		snprintf(cmdbuf, sizeof(cmdbuf), "echo test %d, sender equiv cmd %s", test_num, equiv_cmd);
 	else
-		sprintf(cmdbuf, "echo sender equiv cmd: %s", equiv_cmd);
+		snprintf(cmdbuf, sizeof(cmdbuf), "echo sender equiv cmd: %s", equiv_cmd);
 	if (o_tcp) {
 		send_rtn = send(sock,cmdbuf,strlen(cmdbuf)+1,0);
 	} else {
@@ -554,9 +559,9 @@ MAIN_LOOP:
 			send_len = o_msg_len;
 			if (! o_Payload) {
 				if (o_decimal)
-					sprintf(buff,"Message %d",msg_num);
+					snprintf(buff,65535,"Message %d",msg_num);
 				else
-					sprintf(buff,"Message %x",msg_num);
+					snprintf(buff,65535,"Message %x",msg_num);
 				if (o_msg_len == 0)
 					send_len = strlen(buff);
 			}
@@ -600,7 +605,7 @@ MAIN_LOOP:
 		SLEEP_MSEC(o_stat_pause);
 		if (o_quiet < 2)
 			printf("Sending stat\n");
-		sprintf(cmdbuf, "stat %d", msg_num);
+		snprintf(cmdbuf, sizeof(cmdbuf), "stat %d", msg_num);
 		send_len = strlen(cmdbuf);
 		send_rtn = sendto(sock,cmdbuf,send_len,0,(struct sockaddr *)&sin,sizeof(sin));
 		if (send_rtn == SOCKET_ERROR) {

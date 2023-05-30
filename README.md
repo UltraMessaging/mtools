@@ -2,7 +2,8 @@
 
 This package contains source and executables for 3 tools:
 msend, mdump, and mpong.
-They are used to test multicast network connectivity and performance.
+They are used to test network connectivity and performance,
+especially multicast.
 
 ## COPYRIGHT AND LICENSE
 
@@ -11,7 +12,7 @@ so Informatica is releasing it to the public domain.
 But "public domain" does not have an internationally agreed-upon definition,
 so we use CC0:
 
-Copyright 2022 Informatica http://informatica.com and licensed
+Copyright 2022-2023 Informatica http://informatica.com and licensed
 "public domain" style under
 [CC0](http://creativecommons.org/publicdomain/zero/1.0/):
 ![CC0](https://licensebuttons.net/p/zero/1.0/88x31.png "CC0")
@@ -20,7 +21,7 @@ To the extent possible under law, the contributors to this project have
 waived all copyright and related or neighboring rights to this work.
 In other words, you can use this code for any purpose without any
 restrictions.  This work is published from: United States.  The project home
-is https://github.com/fordsfords/mtools
+is https://github.com/UltraMessaging/mtools
 
 THE SOFTWARE IS PROVIDED "AS IS" AND INFORMATICA DISCLAIMS ALL WARRANTIES
 EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION, ANY IMPLIED WARRANTIES OF
@@ -34,7 +35,7 @@ THE LIKELIHOOD OF SUCH DAMAGES.
 
 ## REPOSITORY
 
-See https://github.com/fordsfords/mtools for code and documentation.
+Project home: https://github.com/UltraMessaging/mtools
 
 ## DEPENDENCIES
 
@@ -43,9 +44,12 @@ None.
 ## INTRODUCTION
 
 This package contains the "msend" and "mdump" tools to aid in testing
-multicast connectivity and performance.
+network connectivity and performance, especially multicast.
 You will find herein documentation, the source code and
-executables built on X86, 64-bit Linux and Windows.
+executables built on X86 64-bit Linux and Windows.
+
+For most of this document, multicast usage is assumed.
+Near the end, unicast operation is described.
 
 Many organizations are looking to switch their high-speed messaging from
 TCP to Multicast.
@@ -77,7 +81,7 @@ small enough to limit the duration of the test to a few seconds.
 ## MSEND
 
 ````
-Usage: msend [-1|2|3|4|5] [-b burst_count] [-d] [-h] [-l loops] [-m msg_len] [-n num_bursts] [-p pause] [-P payload] [-q] [-s stat_pause] [-S Sndbuf_size] group port [ttl] [interface]
+char usage_str[] = "[-1|2|3|4|5] [-b burst_count] [-d] [-h] [-l loops] [-m msg_len] [-n num_bursts] [-P payload] [-p pause] [-q] [-S Sndbuf_size] [-s stat_pause] [-t | -u] group port [ttl] [interface]";
 
 Where:
   -1 : pre-load opts for basic connectivity (1 short msg per sec for 10 min)
@@ -94,9 +98,9 @@ Where:
   -p pause : pause (milliseconds) between bursts [1000]
   -P payload : hex digits for message content (implicit -m)
   -q : loop more quietly (can use '-qq' for complete silence)
-  -s stat_pause : pause (milliseconds) before sending stat msg (0=no stat) [0]
   -S Sndbuf_size : size (bytes) of UDP send buffer (SO_SNDBUF) [65536]
                    (use 0 for system default buff size)
+  -s stat_pause : pause (milliseconds) before sending stat msg (0=no stat) [0]
   -t : tcp ('group' becomes destination IP) [multicast]
   -u : unicast udp ('group' becomes destination IP) [multicast]
 
@@ -109,7 +113,7 @@ Where:
 ## MDUMP
 
 ````
-Usage: mdump [-h] [-q] [-Q Quiet_lvl] [-r rcvbuf_size] [-p pause_ms/num] [-v] [-s] group port [interface]
+Usage: mdump [-h] [-o ofile] [-p pause_ms[/loops]] [-Q Quiet_lvl] [-q] [-r rcvbuf_size] [-s] [-t] [-v] group port [interface]
 
 Where:
   -h : help
@@ -467,3 +471,43 @@ timeouts are programmed.  If several tries continue to result in loss,
 there is something seriously wrong with your multicast connectivity, and
 that needs to be diagnosed and resolved before meaningful latency measurements
 are possible.
+
+## UNICAST NOTES
+
+The mtools programs were initially designed for testing of multicast.
+However, there are many times that similar tools for unicast (UDP and/or
+TCP) testing are desired.
+
+For sending unicast UDP,
+add the "-u" option and supply the destination host's IP in place
+of the multicast group:
+
+````
+msend -u 10.1.2.4 12000
+````
+
+For receiving the unicast UDP, supply 0.0.0.0 in place
+of the multicast group:
+
+````
+mdump 0.0.0.0 12000
+````
+
+For sending TCP,
+add the "-t" option and supply the destination host's IP in place
+of the multicast group:
+
+````
+msend -t 10.1.2.4 12000
+````
+
+For receiving the unicast UDP,
+add the "-t" option and supply 0.0.0.0 in place
+of the multicast group:
+
+````
+mdump 0.0.0.0 12000
+````
+
+Note that mdump acts as the server (listener) and should be
+started before msend, the client (initiator).

@@ -1,7 +1,8 @@
 /* mpong.c */
 /*   Program to do ping-pong round-trip latency measurements using
  * multicast.
- * See https://github.com/UltraMessaging/mtools
+ *
+ * Project home: https://github.com/UltraMessaging/mtools
  *
  * Author: 29West/Informatica (with small parts of the code borrowed
  * from J.P.Knight@lut.ac.uk's "mdump" program)
@@ -25,6 +26,10 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+
+#if defined(_WIN32)
+#define snprintf _snprintf
+#endif
 
 /* Many of the following definitions are intended to make it easier to write
  * portable code between windows and unix. */
@@ -444,7 +449,7 @@ int main(int argc, char **argv)
 				start_tvs[num_rcvd] = start_tv;
 				end_tvs[num_rcvd] = end_tv;
 				/* sanity check (make sure payload contains start_tv) */
-				if (cur_size != sizeof(struct timeval)) { fprintf(stderr, "ERROR: recvfrom rtn val %d != sizeof struct timeval %d\n", cur_size, sizeof(struct timeval)); EXIT(1); }
+				if (cur_size != sizeof(struct timeval)) { fprintf(stderr, "ERROR: recvfrom rtn val %d != sizeof struct timeval %d\n", cur_size, (int)sizeof(struct timeval)); EXIT(1); }
 				if (memcmp(buff, (char *)&start_tv, sizeof(struct timeval)) != 0) { fprintf(stderr, "ERROR: recvfrom buff != start_tv\n"); EXIT(1); }
 			}
 		}  /* for num_rcvd */
@@ -471,9 +476,9 @@ int main(int argc, char **argv)
 			normalize_tv(&start_tv);
 
 			if (o_verbose) {
-				sprintf(timestr1, "%d.%06d", start_tv.tv_sec, start_tv.tv_usec);
-				if (delta_tv.tv_sec != 0) sprintf(timestr2, "%d%06d", delta_tv.tv_sec, delta_tv.tv_usec);
-				else sprintf(timestr2, "%d", delta_tv.tv_usec);
+				sprintf(timestr1, "%d.%06d", (int)start_tv.tv_sec, (int)start_tv.tv_usec);
+				if (delta_tv.tv_sec != 0) sprintf(timestr2, "%d%06d", (int)delta_tv.tv_sec, (int)delta_tv.tv_usec);
+				else sprintf(timestr2, "%d", (int)delta_tv.tv_usec);
 				printf("%s %s\n", timestr1, timestr2); fflush(stdout);
 				if (o_output) { fprintf(o_output, "%s %s\n", timestr1, timestr2); fflush(o_output); }
 			}
@@ -508,10 +513,10 @@ int main(int argc, char **argv)
 		std = pow((std / (float)o_samples), 0.5);
 
 		/* print final results */
-		if (min_tv.tv_sec != 0) sprintf(timestr1, "%d%06d", min_tv.tv_sec, min_tv.tv_usec);
-		else sprintf(timestr1, "%d", min_tv.tv_usec);
-		if (max_tv.tv_sec != 0) sprintf(timestr2, "%d%06d", max_tv.tv_sec, max_tv.tv_usec);
-		else sprintf(timestr2, "%d", max_tv.tv_usec);
+		if (min_tv.tv_sec != 0) sprintf(timestr1, "%d%06d", (int)min_tv.tv_sec, (int)min_tv.tv_usec);
+		else sprintf(timestr1, "%d", (int)min_tv.tv_usec);
+		if (max_tv.tv_sec != 0) sprintf(timestr2, "%d%06d", (int)max_tv.tv_sec, (int)max_tv.tv_usec);
+		else sprintf(timestr2, "%d", (int)max_tv.tv_usec);
 		printf("avg RTT %f us, std dev %f, min RTT %s us, max RTT %s us\n", avg, std, timestr1, timestr2); fflush(stdout);
 		if (o_output) { fprintf(o_output, "avg RTT %f us, std dev %f, min RTT %s us max RTT %s us\n", avg, std, timestr1, timestr2); fflush(o_output); }
 	}  /* if initator */

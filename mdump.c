@@ -2,9 +2,10 @@
 /*   Program to dump the contents of all datagrams arriving on a specified
  * multicast address and port.  The dump gives both the hex and ASCII
  * equivalents of the datagram payload.
- * See https://github.com/UltraMessaging/mtools
  *
- * Author: J.P.Knight@lut.ac.uk (heavily modified by 29West/Informatica)
+ * Project home: https://github.com/UltraMessaging/mtools
+ *
+ * Original author: J.P.Knight@lut.ac.uk (heavily modified by 29West/Informatica)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted without restriction.
@@ -25,6 +26,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#if defined(_WIN32)
+#define snprintf _snprintf
+#endif
 
 /* Many of the following definitions are intended to make it easier to write
  * portable code between windows and unix. */
@@ -100,7 +105,7 @@ unsigned short int groupport;
 char *bind_if;
 
 
-char usage_str[] = "[-h] [-o ofile] [-p pause_ms[/loops]] [-Q Quiet_lvl] [-q] [-r rcvbuf_size] [-s] [-t] [-u] [-v] group port [interface]";
+char usage_str[] = "[-h] [-o ofile] [-p pause_ms[/loops]] [-Q Quiet_lvl] [-q] [-r rcvbuf_size] [-s] [-t] [-v] group port [interface]";
 
 void usage(char *msg)
 {
@@ -179,7 +184,7 @@ char *format_time(const struct timeval *tv)
 
 	unsigned int h = localtime((time_t *)&tv->tv_sec)->tm_hour;
 	min = (int)(tv->tv_sec % 86400);
-	sprintf(buff,"%02d:%02d:%02d.%06d",h,((int)min%3600)/60,(int)min%60,(int)tv->tv_usec);
+	snprintf(buff, sizeof(buff), "%02d:%02d:%02d.%06d",h,((int)min%3600)/60,(int)min%60,(int)tv->tv_usec);
 	return buff;
 }  /* format_time */
 
@@ -331,7 +336,7 @@ int main(int argc, char **argv)
 				fprintf(stderr, "ERROR: ");  perror("fopen");
 				exit(1);
 			}
-			sprintf(o_output_equiv_opt, "-o %s ", toptarg);
+			snprintf(o_output_equiv_opt, sizeof(o_output_equiv_opt), "-o %s ", toptarg);
 			break;
 		  default:
 			usage("unrecognized option");
@@ -346,7 +351,7 @@ int main(int argc, char **argv)
 	if (num_parms == 2) {
 		groupaddr = inet_addr(argv[toptind]);
 		groupport = (unsigned short)atoi(argv[toptind+1]);
-		sprintf(equiv_cmd, "mdump %s-p%d -Q%d -r%d %s%s%s%s %s",
+		snprintf(equiv_cmd, sizeof(equiv_cmd), "mdump %s-p%d -Q%d -r%d %s%s%s%s %s",
 				o_output_equiv_opt, o_pause_ms, o_quiet_lvl, o_rcvbuf_size,
 				o_stop ? "-s " : "",
 				o_tcp ? "-t " : "",
@@ -358,7 +363,7 @@ int main(int argc, char **argv)
 		groupaddr = inet_addr(argv[toptind]);
 		groupport = (unsigned short)atoi(argv[toptind+1]);
 		bind_if  = argv[toptind+2];
-		sprintf(equiv_cmd, "mdump %s-p%d -Q%d -r%d %s%s%s%s %s %s",
+		snprintf(equiv_cmd, sizeof(equiv_cmd), "mdump %s-p%d -Q%d -r%d %s%s%s%s %s %s",
 				o_output_equiv_opt, o_pause_ms, o_quiet_lvl, o_rcvbuf_size,
 				o_stop ? "-s " : "",
 				o_tcp ? "-t " : "",
