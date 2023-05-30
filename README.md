@@ -2,7 +2,8 @@
 
 This package contains source and executables for 3 tools:
 msend, mdump, and mpong.
-They are used to test multicast network connectivity and performance.
+They are used to test network connectivity and performance,
+mostly for multicast.
 
 ## COPYRIGHT AND LICENSE
 
@@ -43,32 +44,19 @@ None.
 ## INTRODUCTION
 
 This package contains the "msend" and "mdump" tools to aid in testing
-multicast connectivity and performance.
-You will find herein documentation, the source code and
-executables built on X86, 64-bit Linux and Windows.
-
-Many organizations are looking to switch their high-speed messaging from
-TCP to Multicast.
-This can drastically improve their performance in streaming data applications,
-such as live market data, where you have many subscriber programs.
-However, many corporate network infrastructures provide limited
-multicast connectivity or are not able to sustain high message rates.
-Even sites that are successfully using multicast with legacy messaging
-systems encounter problems after an upgrade to a higher-performing
-messaging layer.
-
-Fortunately, most modern networking hardware is capable of passing
-wire-speed multicast with appropriate configuration parameters.
-The key is discovering configuration problems early and diagnosing them.
-The "msend", "mdump", and "mpong" tools can help.
-We at Informatica invite you to use them to evaluate your
-network's capacity to carry multicast traffic.
+network connectivity and performance, mostly for multicast.
+This repo contains documentation, source code, and executables
+built on X86, 64-bit Linux and Windows.
 
 *WARNING*
 
 If used carelessly,
-the msend tool can produce significant network loading and congestion,
-to the point of rendering switches and routers virtually non-functional.
+the msend tool can produce significant network loading and congestion.
+We have seen users of these tools render their core network virtually
+unusable for several minutes,
+although modern networks are typically not so fragile.
+But even modern networks can be disrupted by the kinds of heavy traffic
+that "msend" can generate.
 When using large burst counts (-b>500)
 and/or small pause times (-p<100),
 make sure to keep the number of bursts (-n)
@@ -155,7 +143,7 @@ Where:
 
 Note: initiator sends on supplied port + 1, reflector replies on supplied port.
 
-## NOTES
+## MULTICAST NOTES
 
 The tools, "msend" in particular, have many options which
 are useful in diagnosing a variety of multicast problems.  To make the
@@ -239,7 +227,7 @@ at processing UDP.  For the purposes of evaluating your network, it is
 suggested that the sending and receiving hosts be as closely-matched
 as possible.
 
-## TEST 1
+### TEST 1
 
 Test 1 sends one small datagram per second for 10 minutes.  It initially
 tests simple connectivity, and after several minutes verifies that
@@ -271,7 +259,7 @@ receiver, and remember to use a different multicast address for that second
 run.  Also, note that other tests use the "-q" option on the mdump command.
 However, test 1 does not use "-q".
 
-## TEST 2
+### TEST 2
 
 Test 2 sends one large datagram per second for 5 seconds.  It tests the
 ability of the network hardware to establish a multicast stream from a
@@ -299,7 +287,7 @@ Be sure to run the test a second time, switching the roles of sender and
 receiver, and remember to use a different multicast address for that second
 run.
 
-## TEST 3
+### TEST 3
 
 Test 3 sends 50 bursts of 100 datagrams (8K each).  Each burst of 100 is sent
 at the maximum possible send rate for the host usually fully saturating
@@ -328,7 +316,7 @@ Be sure to run the test a second time, switching the roles of sender and
 receiver, and remember to use a different multicast address for that second
 run.
 
-## TEST 4
+### TEST 4
 
 Test 4 sends a single burst of 5000 datagrams (20 bytes each).  The burst is
 sent at the maximum possible send rate for the host.  It may not
@@ -358,7 +346,7 @@ Be sure to run the test a second time, switching the roles of sender and
 receiver, and remember to use a different multicast address for that second
 run.
 
-## TEST 5
+### TEST 5
 
 Test 5 sends a single burst of 50,000 datagrams (800 bytes each).  The burst
 is sent at the maximum possible send rate for the host.
@@ -468,11 +456,47 @@ there is something seriously wrong with your multicast connectivity, and
 that needs to be diagnosed and resolved before meaningful latency measurements
 are possible.
 
+## UNICAST NOTES
+
+It is sometimes useful to test unicast (point-to-point) connectivity.
+While the [ncat](https://man7.org/linux/man-pages/man1/ncat.1.html)
+program ("nc" for short) is a popular tool for this,
+people already familiar with mtools can use the tools in unicast mode.
+
+### Unicast UDP Example
+
+Send 1 message per second to host 10.1.2.4, destination port 12000:
+````
+msend -u 10.1.2.4 12000
+````
+Receive that data on host 10.1.2.4:
+````
+mdump 0.0.0.0 12000
+````
+
+### TCP Example
+
+Send 1 message per second to host 10.1.2.4, port 12000:
+
+````
+msend -t 10.1.2.4 12000
+````
+
+Receive that data on host 10.1.2.4:
+````
+mdump -t 0.0.0.0 12000
+````
+
+Note that "mdump" is the server (listener) and "msend"
+is the client (initiator).
+For TCP use, "mdump" should be started before "msend".
+
+
 ## BUILDING
 
 For Linux, use the "bld_linux.sh" script.
 
-For Windows, the "bld_win.sh" is old and almost certainly will not work
-(unless you have an ancient version of Visual Studio).
-Instead, use the "mtools.sln" solution file.
+For Windows, use the "mtools.sln" solution file.
 Be sure to select X64.
+(The "bld_win.sh" is old and almost certainly will not work
+unless you have an ancient version of Visual Studio.)
