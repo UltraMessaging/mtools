@@ -1,8 +1,7 @@
 /* mpong.c */
 /*   Program to do ping-pong round-trip latency measurements using
  * multicast.
- *
- * Project home: https://github.com/UltraMessaging/mtools
+ * See https://github.com/UltraMessaging/mtools
  *
  * Author: 29West/Informatica (with small parts of the code borrowed
  * from J.P.Knight@lut.ac.uk's "mdump" program)

@@ -2,8 +2,7 @@
 
 This package contains source and executables for 3 tools:
 msend, mdump, and mpong.
-They are used to test network connectivity and performance,
-especially multicast.
+They are used to test multicast network connectivity and performance.
 
 ## COPYRIGHT AND LICENSE
 
@@ -12,7 +11,7 @@ so Informatica is releasing it to the public domain.
 But "public domain" does not have an internationally agreed-upon definition,
 so we use CC0:
 
-Copyright 2022-2023 Informatica http://informatica.com and licensed
+Copyright 2022 Informatica http://informatica.com and licensed
 "public domain" style under
 [CC0](http://creativecommons.org/publicdomain/zero/1.0/):
 ![CC0](https://licensebuttons.net/p/zero/1.0/88x31.png "CC0")
@@ -21,7 +20,7 @@ To the extent possible under law, the contributors to this project have
 waived all copyright and related or neighboring rights to this work.
 In other words, you can use this code for any purpose without any
 restrictions.  This work is published from: United States.  The project home
-is https://github.com/UltraMessaging/mtools
+is https://github.com/fordsfords/mtools
 
 THE SOFTWARE IS PROVIDED "AS IS" AND INFORMATICA DISCLAIMS ALL WARRANTIES
 EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION, ANY IMPLIED WARRANTIES OF
@@ -35,7 +34,7 @@ THE LIKELIHOOD OF SUCH DAMAGES.
 
 ## REPOSITORY
 
-Project home: https://github.com/UltraMessaging/mtools
+See https://github.com/fordsfords/mtools for code and documentation.
 
 ## DEPENDENCIES
 
@@ -44,12 +43,9 @@ None.
 ## INTRODUCTION
 
 This package contains the "msend" and "mdump" tools to aid in testing
-network connectivity and performance, especially multicast.
+multicast connectivity and performance.
 You will find herein documentation, the source code and
-executables built on X86 64-bit Linux and Windows.
-
-For most of this document, multicast usage is assumed.
-Near the end, unicast operation is described.
+executables built on X86, 64-bit Linux and Windows.
 
 Many organizations are looking to switch their high-speed messaging from
 TCP to Multicast.
@@ -472,42 +468,11 @@ there is something seriously wrong with your multicast connectivity, and
 that needs to be diagnosed and resolved before meaningful latency measurements
 are possible.
 
-## UNICAST NOTES
+## BUILDING
 
-The mtools programs were initially designed for testing of multicast.
-However, there are many times that similar tools for unicast (UDP and/or
-TCP) testing are desired.
+For Linux, use the "bld_linux.sh" script.
 
-For sending unicast UDP,
-add the "-u" option and supply the destination host's IP in place
-of the multicast group:
-
-````
-msend -u 10.1.2.4 12000
-````
-
-For receiving the unicast UDP, supply 0.0.0.0 in place
-of the multicast group:
-
-````
-mdump 0.0.0.0 12000
-````
-
-For sending TCP,
-add the "-t" option and supply the destination host's IP in place
-of the multicast group:
-
-````
-msend -t 10.1.2.4 12000
-````
-
-For receiving the unicast UDP,
-add the "-t" option and supply 0.0.0.0 in place
-of the multicast group:
-
-````
-mdump 0.0.0.0 12000
-````
-
-Note that mdump acts as the server (listener) and should be
-started before msend, the client (initiator).
+For Windows, the "bld_win.sh" is old and almost certainly will not work
+(unless you have an ancient version of Visual Studio).
+Instead, use the "mtools.sln" solution file.
+Be sure to select X64.

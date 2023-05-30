@@ -1,8 +1,7 @@
 /* msend.c */
 /*   Program to send multicast packets in flexible ways to test multicast
  * networks.
- *
- * Project home: https://github.com/UltraMessaging/mtools
+ * See https://github.com/UltraMessaging/mtools
  *
  * Authors: The fine folks at 29West/Informatica
  *

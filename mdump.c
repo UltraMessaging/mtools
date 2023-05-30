@@ -2,10 +2,9 @@
 /*   Program to dump the contents of all datagrams arriving on a specified
  * multicast address and port.  The dump gives both the hex and ASCII
  * equivalents of the datagram payload.
+ * See https://github.com/UltraMessaging/mtools
  *
- * Project home: https://github.com/UltraMessaging/mtools
- *
- * Original author: J.P.Knight@lut.ac.uk (heavily modified by 29West/Informatica)
+ * Author: J.P.Knight@lut.ac.uk (heavily modified by 29West/Informatica)
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted without restriction.
