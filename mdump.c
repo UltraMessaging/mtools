@@ -176,14 +176,17 @@ char *intoa(unsigned int addr)
 }  /* intoa */
 
 
-char *format_time(const struct timeval *tv)
+/* Return ptr to ascii time string. NOT THREAD SAFE! */
+char *format_time(const struct timeval *in_tv)
 {
+	/* Static so that a pointer to it can be returned. */
 	static char buff[sizeof(".xx:xx:xx.xxxxxx")];
-	int min;
 
-	unsigned int h = localtime((time_t *)&tv->tv_sec)->tm_hour;
-	min = (int)(tv->tv_sec % 86400);
-	snprintf(buff, sizeof(buff), "%02d:%02d:%02d.%06d",h,((int)min%3600)/60,(int)min%60,(int)tv->tv_usec);
+	time_t epoch_sec = (time_t)in_tv->tv_sec;
+	struct tm *in_tm = localtime(&epoch_sec);
+
+	snprintf(buff, sizeof(buff), "%02d:%02d:%02d.%06d",
+		in_tm->tm_hour, in_tm->tm_min, in_tm->tm_sec, (int)in_tv->tv_usec);
 	return buff;
 }  /* format_time */
 
