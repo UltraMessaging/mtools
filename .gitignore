@@ -12,6 +12,8 @@ tmp.*
 *.log
 *.recipe
 *.tlog
+*.sdf
+*.opensdf
 x64
 
 # Prerequisites
