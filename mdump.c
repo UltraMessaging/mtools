@@ -88,6 +88,7 @@ typedef unsigned long socklen_t;
 char *prog_name = "xxx";
 
 /* program options */
+int o_compact_dump;
 int o_quiet_lvl;
 int o_rcvbuf_size;
 int o_pause_ms;
@@ -104,7 +105,7 @@ unsigned short int groupport;
 char *bind_if;
 
 
-char usage_str[] = "[-h] [-o ofile] [-p pause_ms[/loops]] [-Q Quiet_lvl] [-q] [-r rcvbuf_size] [-s] [-t] [-v] group port [interface]";
+char usage_str[] = "[-h] [-o ofile] [-c compact_dump] [-p pause_ms[/loops]] [-Q Quiet_lvl] [-q] [-r rcvbuf_size] [-s] [-t] [-v] group port [interface]";
 
 void usage(char *msg)
 {
@@ -124,6 +125,7 @@ void help(char *msg)
 	fprintf(stderr, "Where:\n"
 			"  -h : help\n"
 			"  -o ofile : print results to file (in addition to stdout)\n"
+			"  -c compact_dump : Single-line output of 'compact_dump' max length [0: no compact]\n"
 			"  -p pause_ms[/num] : milliseconds to pause after each receive [0: no pause]\n"
 			"                      and number of loops to apply the pause [0: all loops]\n"
 			"  -Q Quiet_lvl : set quiet level [0] :\n"
@@ -220,6 +222,40 @@ void dump(FILE *ofile, const char *buffer, int size)
 }  /* dump */
 
 
+/* Dump single line. */
+char *dump_compact(const char *buffer, int size)
+{
+	int i;
+	unsigned char c;
+	static char *obuff = NULL;
+	static char hexchar[] = "0123456789abcdef";
+	int hex_ofs, text_ofs;
+
+	if (obuff == NULL) {  /* If first time called */
+		/* Each byte to print is 2 hex chars, space, and the char itself (or '.'). Add colon and null. */
+		obuff = malloc((4 * o_compact_dump) + 2);
+		if (obuff == NULL) { fprintf(stderr, "malloc failed\n"); exit(1); }
+	}
+
+	if (size > o_compact_dump) {
+		size = o_compact_dump;
+	}
+
+	hex_ofs = 0;
+	text_ofs = (3 * size) + 1;
+	for (i=0; i<size; i++) {
+		c = buffer[i];
+		obuff[hex_ofs++] = hexchar[c / 16];
+		obuff[hex_ofs++] = hexchar[c % 16];
+		obuff[hex_ofs++] = ' ';
+		obuff[text_ofs++] = ((c<0x20)||(c>0x7e))?'.':c;
+	}
+	obuff[hex_ofs] = ':';  /* Separate hex from text. */
+	obuff[text_ofs] = '\0';
+	return obuff;
+}  /* dump */
+
+
 void currenttv(struct timeval *tv)
 {
 #if defined(_WIN32)
@@ -284,6 +320,7 @@ int main(int argc, char **argv)
 	CLOSESOCKET(sock);
 
 	/* default values for options */
+	o_compact_dump = 0;
 	o_quiet_lvl = 0;
 	o_rcvbuf_size = 0x400000;  /* 4MB */
 	o_pause_ms = 0;
@@ -297,10 +334,13 @@ int main(int argc, char **argv)
 	/* default values for optional positional params */
 	bind_if = NULL;
 
-	while ((opt = tgetopt(argc, argv, "hqQ:p:r:o:vst")) != EOF) {
+	while ((opt = tgetopt(argc, argv, "c:hqQ:p:r:o:vst")) != EOF) {
 		switch (opt) {
 		  case 'h':
 			help(NULL);  exit(0);
+			break;
+		  case 'c':
+			o_compact_dump = atoi(toptarg);
 			break;
 		  case 'q':
 			o_quiet_lvl = 2;
@@ -486,15 +526,31 @@ int main(int argc, char **argv)
 
 		if (o_quiet_lvl == 0) {  /* non-quiet: print full dump */
 			currenttv(&tv);
-			printf("%s %s.%d %d bytes:\n",
-					format_time(&tv), inet_ntoa(src.sin_addr),
-					ntohs(src.sin_port), cur_size);
-			dump(stdout, buff,cur_size);
-			if (o_output) {
-				fprintf(o_output, "%s %s.%d %d bytes:\n",
+			if (o_compact_dump > 0) {
+				printf("%s %s.%d %d bytes: %s\n",
+						format_time(&tv), inet_ntoa(src.sin_addr),
+						ntohs(src.sin_port), cur_size,
+						dump_compact(buff, cur_size));
+				fflush(stdout);
+			} else {  /* not compact */
+				printf("%s %s.%d %d bytes:\n",
 						format_time(&tv), inet_ntoa(src.sin_addr),
 						ntohs(src.sin_port), cur_size);
-				dump(o_output, buff,cur_size);
+				dump(stdout, buff, cur_size);
+			}
+			if (o_output) {
+				if (o_compact_dump > 0) {
+					fprintf(o_output, "%s %s.%d %d bytes: %s\n",
+							format_time(&tv), inet_ntoa(src.sin_addr),
+							ntohs(src.sin_port), cur_size,
+							dump_compact(buff, cur_size));
+					fflush(o_output);
+				} else {  /* not compact */
+					printf("%s %s.%d %d bytes:\n",
+							format_time(&tv), inet_ntoa(src.sin_addr),
+							ntohs(src.sin_port), cur_size);
+					dump(stdout, buff, cur_size);
+				}
 			}
 		}
 		if (o_quiet_lvl == 1) {  /* semi-quiet: print datagram summary */
