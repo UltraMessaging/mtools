@@ -27,6 +27,7 @@
 #include <math.h>
 
 #if defined(_WIN32)
+#pragma warning(disable : 4996)
 #define snprintf _snprintf
 #endif
 
@@ -39,7 +40,7 @@ extern int toptreset;
 extern char *toptarg;
 int tgetopt(int nargc, char * const *nargv, const char *ostr);
 
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 /* Windows-only includes */
 #include <winsock2.h>
 typedef unsigned long socklen_t;
@@ -48,10 +49,6 @@ typedef unsigned long socklen_t;
 #define ERRNO GetLastError()
 #define CLOSESOCKET closesocket
 #define TLONGLONG signed __int64
-#include <ws2tcpip.h>
-#include <sys\types.h>
-#include <sys\timeb.h>
-#define perror(x) fprintf(stderr,"%s: %d\n",x,GetLastError())
 
 #else
 /* Unix-only includes */
@@ -71,8 +68,15 @@ typedef unsigned long socklen_t;
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
 #define TLONGLONG signed long long
-#   include <sys/time.h>
 #endif
+
+#if defined(_WIN32)
+#   include <ws2tcpip.h>
+#   include <sys\types.h>
+#   include <sys\timeb.h>
+#   define perror(x) fprintf(stderr,"%s: %d\n",x,GetLastError())
+#endif
+
 
 #define EXIT(x) do { fprintf(stdout, "Exit, file: '%s', line: %d\n", __FILE__, __LINE__);  exit(x);  } while (0)
 
@@ -167,7 +171,7 @@ void current_tv(struct timeval *tv)
 	}
 	QueryPerformanceCounter(&ticks);
 	tv->tv_sec = 0;
-	tv->tv_usec = (1000000 * ticks.QuadPart / freq.QuadPart);
+	tv->tv_usec = (long)(1000000 * ticks.QuadPart / freq.QuadPart);
 	normalize_tv(tv);
 #else 
 	gettimeofday(tv,NULL);
@@ -179,7 +183,6 @@ int main(int argc, char **argv)
 {
 	int opt;
 	int num_parms;
-	char equiv_cmd[1024];
 	char *buff;
 	SOCKET sock;
 	socklen_t fromlen = sizeof(struct sockaddr_in);
@@ -201,9 +204,6 @@ int main(int argc, char **argv)
 	float avg;
 	float cur;
 	float std;
-	int num_sent;
-	float perc_loss;
-	char *pause_slash;
 #if defined(_WIN32)
 	unsigned long int iface_in;
 #else
@@ -507,9 +507,9 @@ int main(int argc, char **argv)
 			delta_tv.tv_usec = end_tv.tv_usec - start_tv.tv_usec;
 			normalize_tv(&delta_tv);
 			cur = (float)delta_tv.tv_sec;  cur *= 1000000.0;  cur += (float)delta_tv.tv_usec;
-			std += pow((cur - avg), 2);
+			std += (float)pow((cur - avg), 2);
 		}
-		std = pow((std / (float)o_samples), 0.5);
+		std = (float)pow((std / (float)o_samples), 0.5);
 
 		/* print final results */
 		if (min_tv.tv_sec != 0) sprintf(timestr1, "%d%06d", (int)min_tv.tv_sec, (int)min_tv.tv_usec);

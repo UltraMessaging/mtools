@@ -27,6 +27,7 @@
 #include <stdlib.h>
 
 #if defined(_WIN32)
+#pragma warning(disable : 4996)
 #define snprintf _snprintf
 #endif
 
@@ -261,7 +262,7 @@ void currenttv(struct timeval *tv)
 #if defined(_WIN32)
 	struct _timeb tb;
 	_ftime(&tb);
-	tv->tv_sec = tb.time;
+	tv->tv_sec = (long)tb.time;
 	tv->tv_usec = 1000*tb.millitm;
 #else
 	gettimeofday(tv,NULL);
@@ -584,7 +585,7 @@ int main(int argc, char **argv)
 			buff[cur_size] = '\0';  /* guarantee trailing null */
 			/* 'stat' message contains num msgs sent */
 			num_sent = atoi(&buff[5]);
-			perc_loss = (float)(num_sent - num_rcvd) * 100.0 / (float)num_sent;
+			perc_loss = (float)(num_sent - num_rcvd) * (float)100.0 / (float)num_sent;
 			printf("%d msgs sent, %d received (not including 'stat')\n", num_sent, num_rcvd);
 			printf("%f%% loss\n", perc_loss);
 			fflush(stdout);

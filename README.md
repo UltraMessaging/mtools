@@ -496,7 +496,8 @@ For TCP use, "mdump" should be started before "msend".
 
 For Linux, use the "bld_linux.sh" script.
 
-For Windows, use the "mtools.sln" solution file.
+For Windows, open the "mtools.sln" solution file.
 Be sure to select X64.
-(The "bld_win.sh" is old and almost certainly will not work
-unless you have an ancient version of Visual Studio.)
+
+The executables must be copied from the "x64\Debug" directory to Win64.
+(The "cp_win.sh" shell script does this.)

@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 #if defined(_WIN32)
+#pragma warning(disable : 4996)
 #define snprintf _snprintf
 #endif
 
@@ -304,7 +305,7 @@ int main(int argc, char **argv)
 			o_pause = atoi(toptarg);
 			break;
 		  case 'P':
-			o_msg_len = strlen(toptarg);
+			o_msg_len = (int)strlen(toptarg);
 			if (o_msg_len > 65536) {
 				fprintf(stderr, "Error, payload too big\n");
 				exit(1);
@@ -537,9 +538,9 @@ MAIN_LOOP:
 	else
 		snprintf(cmdbuf, sizeof(cmdbuf), "echo sender equiv cmd: %s", equiv_cmd);
 	if (o_tcp) {
-		send_rtn = send(sock,cmdbuf,strlen(cmdbuf)+1,0);
+		send_rtn = (int)send(sock,cmdbuf,(int)strlen(cmdbuf)+1,0);
 	} else {
-		send_rtn = sendto(sock,cmdbuf,strlen(cmdbuf)+1,0,(struct sockaddr *)&sin,sizeof(sin));
+		send_rtn = (int)sendto(sock,cmdbuf,(int)strlen(cmdbuf)+1,0,(struct sockaddr *)&sin,sizeof(sin));
 	}
 	if (send_rtn == SOCKET_ERROR) {
 		fprintf(stderr, "ERROR: ");  perror("send");
@@ -562,7 +563,7 @@ MAIN_LOOP:
 				else
 					snprintf(buff,65535,"Message %x",msg_num);
 				if (o_msg_len == 0)
-					send_len = strlen(buff);
+					send_len = (int)strlen(buff);
 			}
 
 			if (i == 0) {  /* first msg in batch */
@@ -580,7 +581,7 @@ MAIN_LOOP:
 				/* else o_quiet > 1; very quiet */
 			}
 
-			send_rtn = sendto(sock,buff,send_len,0,(struct sockaddr *)&sin,sizeof(sin));
+			send_rtn = (int)sendto(sock,buff,send_len,0,(struct sockaddr *)&sin,sizeof(sin));
 			if (send_rtn == SOCKET_ERROR) {
 				fprintf(stderr, "ERROR: ");  perror("send");
 				exit(1);
@@ -605,8 +606,8 @@ MAIN_LOOP:
 		if (o_quiet < 2)
 			printf("Sending stat\n");
 		snprintf(cmdbuf, sizeof(cmdbuf), "stat %d", msg_num);
-		send_len = strlen(cmdbuf);
-		send_rtn = sendto(sock,cmdbuf,send_len,0,(struct sockaddr *)&sin,sizeof(sin));
+		send_len = (int)strlen(cmdbuf);
+		send_rtn = (int)sendto(sock,cmdbuf,send_len,0,(struct sockaddr *)&sin,sizeof(sin));
 		if (send_rtn == SOCKET_ERROR) {
 			fprintf(stderr, "ERROR: ");  perror("send");
 			exit(1);
