@@ -24,12 +24,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/time.h>
 #include <math.h>
 
 #if defined(_WIN32)
 #pragma warning(disable : 4996)
 #define snprintf _snprintf
+#else
+#include <sys/time.h>
 #endif
 
 /* Many of the following definitions are intended to make it easier to write
