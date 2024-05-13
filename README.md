@@ -102,6 +102,7 @@ Usage: mdump [-h] [-o ofile] [-p pause_ms[/loops]] [-Q Quiet_lvl] [-q] [-r rcvbu
 Where:
   -h : help
   -o ofile : print results to file (in addition to stdout)
+  -c compact_dump : Single-line output of 'compact_dump' max length [0: no compact]
   -p pause_ms[/num] : milliseconds to pause after each receive [0: no pause]
                       and number of loops to apply the pause [0: all loops]
   -Q Quiet_lvl : set quiet level [0] :
