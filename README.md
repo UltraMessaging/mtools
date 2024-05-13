@@ -65,7 +65,9 @@ small enough to limit the duration of the test to a few seconds.
 ## MSEND
 
 ````
-char usage_str[] = "[-1|2|3|4|5] [-b burst_count] [-d] [-h] [-l loops] [-m msg_len] [-n num_bursts] [-P payload] [-p pause] [-q] [-S Sndbuf_size] [-s stat_pause] [-t | -u] group port [ttl] [interface]";
+Usage: msend [-1|2|3|4|5] [-b burst_count] [-d] [-h] [-l loops] [-m msg_len]
+             [-n num_bursts] [-P payload] [-p pause] [-q] [-S Sndbuf_size]
+             [-s stat_pause] [-t | -u] group port [ttl] [interface]
 
 Where:
   -1 : pre-load opts for basic connectivity (1 short msg per sec for 10 min)
@@ -97,7 +99,8 @@ Where:
 ## MDUMP
 
 ````
-Usage: mdump [-h] [-o ofile] [-p pause_ms[/loops]] [-Q Quiet_lvl] [-q] [-r rcvbuf_size] [-s] [-t] [-v] group port [interface]
+Usage: mdump [-h] [-o ofile] [-c compact_dump] [-p pause_ms[/loops]] [-Q Quiet_lvl]
+             [-q] [-r rcvbuf_size] [-s] [-t] [-v] group port [interface]
 
 Where:
   -h : help
@@ -124,7 +127,8 @@ Where:
 ## MPONG
 
 ````
-Usage: ./mtools/FreeBSD-6-i386/mpong [-h] [-i] [-o ofile] [-r rcvbuf_size] [-S Sndbuf_size] [-s samples] [-v] group port [ttl] [interface]
+Usage: mpong [-h] [-i] [-o ofile] [-r rcvbuf_size] [-S Sndbuf_size] [-s samples]
+             [-v] group port [ttl] [interface]
 
 Where:
   -h : help
@@ -499,6 +503,5 @@ For Linux, use the "bld_linux.sh" script.
 
 For Windows, open the "mtools.sln" solution file.
 Be sure to select X64.
-
 The executables must be copied from the "x64\Debug" directory to Win64.
 (The "cp_win.sh" shell script does this.)
