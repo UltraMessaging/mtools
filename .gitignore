@@ -10,6 +10,7 @@ tmp.*
 .vs
 *.vcxproj.user
 *.log
+*.html
 *.recipe
 *.tlog
 *.sdf
