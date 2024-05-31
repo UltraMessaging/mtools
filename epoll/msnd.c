@@ -28,7 +28,6 @@ char *bind_if;
 
 struct sockaddr_in group_sin;
 int global_max_tight_sends;
-int sockfd;
 uint64_t start_usec;
 
 
@@ -48,7 +47,7 @@ uint64_t start_usec;
 } while (0)  /* DIFF_TS */
 
 
-char usage_str[] = "[-h] [-m msg_len] [-n num_msg] [-r rate] [-s sndbuf_size] group port [interface]";
+char usage_str[] = "[-h] [-m msg_len] [-n num_msg] [-r rate] [-s sndbuf_size] group port interface";
 void usage(char *msg)
 {
   fprintf(stderr, "\n%s\n\n", msg);
@@ -70,7 +69,7 @@ void help()
           "\n"
           "  group : multicast address to receive (required)\n"
           "  port : destination port (required)\n"
-          "  interface : optional IP addr of local interface (for multi-homed hosts) [INADDR_ANY]\n"
+          "  interface : IP addr of local interface (for multi-homed hosts) [INADDR_ANY]\n"
   );
 }  /* help */
 
@@ -117,10 +116,7 @@ void get_parms(int argc, char **argv)
   num_parms = argc - optind;
 
   /* handle positional parameters */
-  if (num_parms == 2) {
-    groupaddr = inet_addr(argv[optind]);
-    groupport = (unsigned short)atoi(argv[optind+1]);
-  } else if (num_parms == 3) {
+  if (num_parms == 3) {
     groupaddr = inet_addr(argv[optind]);
     groupport = (unsigned short)atoi(argv[optind+1]);
     bind_if  = argv[optind+2];
@@ -131,7 +127,7 @@ void get_parms(int argc, char **argv)
 }  /* get_parms */
 
 
-void send_loop(int num_sends, uint64_t sends_per_sec, uint32_t *buffer)
+void send_loop(int sockfd, int num_sends, uint64_t sends_per_sec, uint32_t *buffer)
 {
   struct timespec cur_ts;
   struct timespec start_ts;
@@ -176,6 +172,7 @@ int main(int argc, char **argv)
 {
   int opt, i;
   uint32_t buffer[MAX_UDP_PAYLOAD/sizeof(uint32_t)];
+  int sockfd;
   struct in_addr iface_in;
   int cur_size, sz;
   uint64_t tot_bits;
@@ -222,14 +219,14 @@ int main(int argc, char **argv)
   buffer[1] = 0;
 
   clock_gettime(CLOCK_MONOTONIC, &start_ts);
-  send_loop(o_num_msgs, (uint64_t)o_rate, buffer);
+  send_loop(sockfd, o_num_msgs, (uint64_t)o_rate, buffer);
   clock_gettime(CLOCK_MONOTONIC, &stop_ts);
   DIFF_TS(tot_ns, stop_ts, start_ts);
 
   buffer[0] = 2;
   buffer[1] = 0;
 
-  send_loop(END_LOOPS, (uint64_t)o_rate, buffer);
+  send_loop(sockfd, END_LOOPS, (uint64_t)o_rate, buffer);
 
   close(sockfd);
 

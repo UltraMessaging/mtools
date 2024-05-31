@@ -1,4 +1,5 @@
-/* mrcv.c */
+/* mforwarder.c */
+/* TODO: non-blocking socket, first byte detection (warmup/measure/end), loss rate */
 
 #define _GNU_SOURCE  /* Needed for recvmmsg */
 
@@ -36,6 +37,7 @@ char *bind_if;
 #define STATE_QUITTING 2
 
 /* Globals. */
+int snd_sockfd;
 int quit;
 int state;
 int num_msgs;
@@ -48,6 +50,9 @@ struct timespec start_ts;
 struct timespec stop_ts;
 struct timespec last_pkt_ts;
 int max_dgrams_in_loop;
+/* For send sock. */
+struct in_addr iface_in;
+struct sockaddr_in snd_group_sin;
 
 
 #define CHKERR(chkerr_s_) do { \
@@ -154,7 +159,7 @@ void get_parms(int argc, char **argv)
     groupport = (unsigned short)atoi(argv[optind+1]);
     bind_if  = argv[optind+2];
   } else {
-    usage("need 2-3 positional parameters");
+    usage("need 3 positional parameters");
     exit(1);
   }
 }  /* get_parms */
@@ -166,6 +171,9 @@ void process_datagram(uint32_t *buffer, int len)
   if (o_v_bitmask & 1) {
     printf("Process datagram, size=%d, type=%d sqn=%10u\n",
            (int)len, buffer[0], buffer[1]);
+  }
+  if (!(o_v_bitmask & 4)) {
+    CHKERR(sendto(snd_sockfd, buffer, len, 0, (struct sockaddr *)&snd_group_sin, sizeof(snd_group_sin)));
   }
 
   if (buffer[0] == 0) {
@@ -206,13 +214,13 @@ int main(int argc, char **argv)
   uint32_t *buff;
   int i;
   int opt;
+  socklen_t opt_sz;
   struct epoll_event ev, events[100];
   int flags;
-  int sockfd;
+  int rcv_sockfd;
   int epollfd;
   socklen_t fromlen = sizeof(struct sockaddr_in);
   int cur_size;
-  socklen_t opt_sz;
   struct sockaddr_in name;
   struct sockaddr_in src;
   struct ip_mreq imr;
@@ -261,17 +269,35 @@ int main(int argc, char **argv)
 
   CHKERR(epollfd = epoll_create1(0));
 
-  CHKERR(sockfd = socket(PF_INET,SOCK_DGRAM,0));
+  /* Send socket. */
+
+  CHKERR(snd_sockfd = socket(PF_INET,SOCK_DGRAM,0));
+
+  opt = 1;
+  CHKERR(setsockopt(snd_sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)));
+
+  memset((char *)&iface_in,0,sizeof(iface_in));
+  iface_in.s_addr = inet_addr(bind_if);
+  CHKERR(setsockopt(snd_sockfd, IPPROTO_IP, IP_MULTICAST_IF, (const char*)&iface_in, sizeof(iface_in)));
+
+  memset((char *)&snd_group_sin, 0, sizeof(snd_group_sin));
+  snd_group_sin.sin_family = AF_INET;
+  snd_group_sin.sin_addr.s_addr = groupaddr + 1;
+  snd_group_sin.sin_port = htons(groupport);
+
+  /* Receive socket. */
+
+  CHKERR(rcv_sockfd = socket(PF_INET,SOCK_DGRAM,0));
 
   /* Make non-blocking. */
-  CHKERR(flags = fcntl(sockfd, F_GETFL, 0));
+  CHKERR(flags = fcntl(rcv_sockfd, F_GETFL, 0));
   flags = (flags | O_NONBLOCK);
-  CHKERR(fcntl(sockfd, F_SETFL, flags));
+  CHKERR(fcntl(rcv_sockfd, F_SETFL, flags));
 
-  CHKERR(setsockopt(sockfd,SOL_SOCKET,SO_RCVBUF,(const char *)&o_rcvbuf_size, sizeof(o_rcvbuf_size)));
+  CHKERR(setsockopt(rcv_sockfd,SOL_SOCKET,SO_RCVBUF,(const char *)&o_rcvbuf_size, sizeof(o_rcvbuf_size)));
 
   opt_sz = (socklen_t)sizeof(cur_size);
-  CHKERR(getsockopt(sockfd,SOL_SOCKET,SO_RCVBUF,(char *)&cur_size, (socklen_t *)&opt_sz));
+  CHKERR(getsockopt(rcv_sockfd,SOL_SOCKET,SO_RCVBUF,(char *)&cur_size, (socklen_t *)&opt_sz));
   if (cur_size < o_rcvbuf_size) {
     printf("WARNING: tried to set SO_RCVBUF to %d, only got %d\n", o_rcvbuf_size, cur_size); fflush(stdout);
   }
@@ -281,20 +307,22 @@ int main(int argc, char **argv)
   imr.imr_interface.s_addr = inet_addr(bind_if);
 
   opt = 1;
-  CHKERR(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)));
+  CHKERR(setsockopt(rcv_sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)));
 
   memset((char *)&name,0,sizeof(name));
   name.sin_family = AF_INET;
   name.sin_addr.s_addr = groupaddr;
   name.sin_port = htons(groupport);
-  CHKERR(bind(sockfd,(struct sockaddr *)&name,sizeof(name)));
+  CHKERR(bind(rcv_sockfd,(struct sockaddr *)&name,sizeof(name)));
 
-  CHKERR(setsockopt(sockfd,IPPROTO_IP,IP_ADD_MEMBERSHIP, (char *)&imr,sizeof(struct ip_mreq)));
+  CHKERR(setsockopt(rcv_sockfd,IPPROTO_IP,IP_ADD_MEMBERSHIP, (char *)&imr,sizeof(struct ip_mreq)));
 
-  /* Register sockfd with epoll. */
+  /* Register rcv_sockfd with epoll. */
   ev.events = EPOLLIN;
-  ev.data.fd = sockfd;
-  CHKERR(epoll_ctl(epollfd, EPOLL_CTL_ADD, sockfd, &ev));
+  ev.data.fd = rcv_sockfd;
+  CHKERR(epoll_ctl(epollfd, EPOLL_CTL_ADD, rcv_sockfd, &ev));
+
+  /* Main receive loop. */
 
   num_warmups = 0;
   num_quits = 0;
@@ -407,7 +435,7 @@ int main(int argc, char **argv)
          o_num_msgs_expected - (int)num_msgs,
          ((double)o_num_msgs_expected - (double)num_msgs) * 100.0 / (double)o_num_msgs_expected);
 
-  close(sockfd);
+  close(rcv_sockfd);
   close(epollfd);
   free(buff);
 
