@@ -1,5 +1,4 @@
 /* mforwarder.c */
-/* TODO: non-blocking socket, first byte detection (warmup/measure/end), loss rate */
 
 #define _GNU_SOURCE  /* Needed for recvmmsg */
 
@@ -16,6 +15,7 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
+#include <onload/extensions.h>
 
 #define MAX_UDP_PAYLOAD 1472
 
@@ -167,12 +167,12 @@ void get_parms(int argc, char **argv)
 
 void process_datagram(uint32_t *buffer, int len)
 {
-  clock_gettime(CLOCK_MONOTONIC, &last_pkt_ts);
   if (o_v_bitmask & 1) {
     printf("Process datagram, size=%d, type=%d sqn=%10u\n",
            (int)len, buffer[0], buffer[1]);
   }
-  if (!(o_v_bitmask & 4)) {
+
+  if (num_msgs & 1) {
     CHKERR(sendto(snd_sockfd, buffer, len, 0, (struct sockaddr *)&snd_group_sin, sizeof(snd_group_sin)));
   }
 
@@ -180,7 +180,7 @@ void process_datagram(uint32_t *buffer, int len)
     num_msgs = 0;
     num_warmups++;
     if (state == STATE_INIT) {
-      clock_gettime(CLOCK_MONOTONIC, &start_ts);
+      start_ts = last_pkt_ts;
     }
   }
   else if (buffer[0] == 1) {
@@ -269,23 +269,9 @@ int main(int argc, char **argv)
 
   CHKERR(epollfd = epoll_create1(0));
 
-  /* Send socket. */
-
-  CHKERR(snd_sockfd = socket(PF_INET,SOCK_DGRAM,0));
-
-  opt = 1;
-  CHKERR(setsockopt(snd_sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)));
-
-  memset((char *)&iface_in,0,sizeof(iface_in));
-  iface_in.s_addr = inet_addr(bind_if);
-  CHKERR(setsockopt(snd_sockfd, IPPROTO_IP, IP_MULTICAST_IF, (const char*)&iface_in, sizeof(iface_in)));
-
-  memset((char *)&snd_group_sin, 0, sizeof(snd_group_sin));
-  snd_group_sin.sin_family = AF_INET;
-  snd_group_sin.sin_addr.s_addr = groupaddr + 1;
-  snd_group_sin.sin_port = htons(groupport);
-
   /* Receive socket. */
+
+  CHKERR(onload_set_stackname(ONLOAD_THIS_THREAD, ONLOAD_SCOPE_THREAD, "rcv"));
 
   CHKERR(rcv_sockfd = socket(PF_INET,SOCK_DGRAM,0));
 
@@ -322,6 +308,24 @@ int main(int argc, char **argv)
   ev.data.fd = rcv_sockfd;
   CHKERR(epoll_ctl(epollfd, EPOLL_CTL_ADD, rcv_sockfd, &ev));
 
+  /* Send socket. */
+
+  CHKERR(onload_set_stackname(ONLOAD_THIS_THREAD, ONLOAD_SCOPE_THREAD, "snd"));
+
+  CHKERR(snd_sockfd = socket(PF_INET,SOCK_DGRAM,0));
+
+  opt = 1;
+  CHKERR(setsockopt(snd_sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)));
+
+  memset((char *)&iface_in,0,sizeof(iface_in));
+  iface_in.s_addr = inet_addr(bind_if);
+  CHKERR(setsockopt(snd_sockfd, IPPROTO_IP, IP_MULTICAST_IF, (const char*)&iface_in, sizeof(iface_in)));
+
+  memset((char *)&snd_group_sin, 0, sizeof(snd_group_sin));
+  snd_group_sin.sin_family = AF_INET;
+  snd_group_sin.sin_addr.s_addr = groupaddr + 1;
+  snd_group_sin.sin_port = htons(groupport);
+
   /* Main receive loop. */
 
   num_warmups = 0;
@@ -336,15 +340,19 @@ int main(int argc, char **argv)
 
     CHKERR(nfds = epoll_wait(epollfd, events, 100, o_wait_ms));  /* No wait. */
 
-    /* If it's been > 100 ms since last packet, quit. */
-    if (nfds == 0 && state != STATE_INIT) {
-      struct timespec timeout_ts;
-      int64_t ns_since_last_pkt;
-      clock_gettime(CLOCK_MONOTONIC, &timeout_ts);
-      DIFF_TS(ns_since_last_pkt, timeout_ts, last_pkt_ts);
-      if (ns_since_last_pkt > linger_ns) {
-        quit = 1;
+    if (nfds == 0) {
+      if (state != STATE_INIT) {
+        /* Nothing received (timeout). If it's been a while, quit. */
+        struct timespec timeout_ts;
+        int64_t ns_since_last_pkt;
+        clock_gettime(CLOCK_MONOTONIC, &timeout_ts);
+        DIFF_TS(ns_since_last_pkt, timeout_ts, last_pkt_ts);
+        if (ns_since_last_pkt > linger_ns) {
+          quit = 1;
+        }
       }
+    } else {  /* nfds > 0 */
+      clock_gettime(CLOCK_MONOTONIC, &last_pkt_ts);
     }
 
     for (ev = 0; ev < nfds; ++ev) {

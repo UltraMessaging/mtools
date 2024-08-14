@@ -1,0 +1,121 @@
+These tools are not based on UM. The "700+32" on the message length represents
+700 bytes of lbt-rm payload plus 32 bytes of lbt-rm header.
+# msnd -m msg_len (def 700+32), -n num_msg -r rate
+# mrcv -l linger_ms (time since last packet to quit) -m multi_rcv -n num_msgs_expected -w wait_ms (timeout for epoll)
+
+
+Jarvis: Send on .1
+
+$ taskset -c 2 onload ./msnd -n 5500000 -r 0900001 239.101.3.1 12000 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+...
+o_msg_len=732, o_num_msgs=5500000, o_rate=900001, o_sndbuf_size=0
+5500000 dgrams at 900001 dgrams/sec (5659206707 bits/sec), 2 max tight sends
+
+
+Mamba1: Send on .2
+
+$ EF_POLL_USEC=-1 EF_SPIN_USEC=-1 taskset -c 10 onload ./msnd -n 5500000 -r 0900001 239.101.3.2 12001 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+...
+o_msg_len=732, o_num_msgs=5500000, o_rate=900001, o_sndbuf_size=0
+5500000 dgrams at 900001 dgrams/sec (5659206914 bits/sec), 2 max tight sends
+
+
+Mamba2: Receive on .1 (from Jarvis)
+
+$ EF_POLL_USEC=-1 EF_SPIN_USEC=-1 EF_RXQ_SIZE=4096 taskset -c 4 onload ./mrcv -l 4000 -m 200 -r 19000000 -n 5500000 -w 10 239.101.3.1 12000 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+...
+o_linger_ms=4000, o_multi_rcv=200, o_num_msgs_expected=5500000, o_rcvbuf_size=19000000, o_v_bitmask=0
+5500000 dgrams at 900000 dgrams/sec (5688001540 bits/sec), 200 max dgrams in loop, 100 warmups, 300 quits, 0 ooo, 0 loss (0.00%)
+
+
+
+Mamba3:
+
+./stats.sh
+
+
+
+==========================
+
+Jarvis:
+
+$ taskset -c 2 onload ./msnd -n 5500000 -r 1100001 239.101.3.1 12000 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+...
+o_msg_len=732, o_num_msgs=5500000, o_rate=1100001, o_sndbuf_size=0
+5500000 dgrams at 1100001 dgrams/sec (6916804305 bits/sec), 7 max tight sends
+
+
+Mamba1:
+
+$ EF_POLL_USEC=-1 EF_SPIN_USEC=-1 taskset -c 10 onload ./msnd -n 5500000 -r 1100001 239.101.3.2 12001 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+...
+o_msg_len=732, o_num_msgs=5500000, o_rate=1100001, o_sndbuf_size=0
+5500000 dgrams at 1100001 dgrams/sec (6916806867 bits/sec), 1 max tight sends
+
+
+Mamba2:
+
+$ EF_POLL_USEC=-1 EF_SPIN_USEC=-1 EF_RXQ_SIZE=4096 taskset -c 4 onload ./mrcv -l 4000 -m 200 -r 19000000 -n 5500000 -w 10 239.101.3.1 12000 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+...
+o_linger_ms=4000, o_multi_rcv=200, o_num_msgs_expected=5500000, o_rcvbuf_size=19000000, o_v_bitmask=0
+4911937 dgrams at 975965 dgrams/sec (6168097161 bits/sec), 200 max dgrams in loop, 100 warmups, 254 quits, 530447 ooo, 588063 loss (10.69%)
+
+
+========================================
+
+Jarvis:
+
+$ taskset -c 2 onload ./msnd -n 5500000 -r 1500001 239.101.3.1 12000 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+...
+o_msg_len=732, o_num_msgs=5500000, o_rate=1500001, o_sndbuf_size=0
+5500000 dgrams at 1500000 dgrams/sec (9431997388 bits/sec), 11 max tight sends
+
+
+Mamba1:
+
+$ EF_POLL_USEC=-1 EF_SPIN_USEC=-1 taskset -c 10 onload ./msnd -n 5500000 -r 0300001 239.101.3.2 12001 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+...
+o_msg_len=732, o_num_msgs=5500000, o_rate=300001, o_sndbuf_size=0
+5500000 dgrams at 300001 dgrams/sec (1886406591 bits/sec), 1 max tight sends
+
+
+Mamba2:
+
+$ EF_POLL_USEC=-1 EF_SPIN_USEC=-1 EF_RXQ_SIZE=4096 taskset -c 4 onload ./mrcv -l 4000 -m 200 -r 19000000 -n 5500000 -w 10 239.101.3.1 12000 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+...
+o_linger_ms=4000, o_multi_rcv=200, o_num_msgs_expected=5500000, o_rcvbuf_size=19000000, o_v_bitmask=0
+5500000 dgrams at 1499997 dgrams/sec (9479979486 bits/sec), 177 max dgrams in loop, 100 warmups, 300 quits, 0 ooo, 0 loss (0.00%)
+
+
+==========================================
+
+Jarvis:
+
+$ taskset -c 2 onload ./msnd -n 5500000 -r 1500001 239.101.3.1 12000 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+...
+o_msg_len=732, o_num_msgs=5500000, o_rate=1500001, o_sndbuf_size=0
+5500000 dgrams at 1500000 dgrams/sec (9432002345 bits/sec), 10 max tight sends
+
+
+Mamba1:
+
+$ EF_POLL_USEC=-1 EF_SPIN_USEC=-1 taskset -c 10 onload ./msnd -n 5500000 -r 0500001 239.101.3.2 12001 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+oo:msnd[21032]: Using OpenOnload 7.0.0-pON11504 [1]
+oo:msnd[21032]: Copyright 2006-2019 Solarflare Communications, 2002-2005 Level 5 Networks
+o_msg_len=732, o_num_msgs=5500000, o_rate=500001, o_sndbuf_size=0
+5500000 dgrams at 500001 dgrams/sec (3144006736 bits/sec), 1 max tight sends
+
+
+Mamba2:
+
+$ EF_POLL_USEC=-1 EF_SPIN_USEC=-1 EF_RXQ_SIZE=4096 taskset -c 4 onload ./mrcv -l 4000 -m 200 -r 19000000 -n 5500000 -w 10 239.101.3.1 12000 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`
+...
+o_linger_ms=4000, o_multi_rcv=200, o_num_msgs_expected=5500000, o_rcvbuf_size=19000000, o_v_bitmask=0
+5409241 dgrams at 1461961 dgrams/sec (9239591537 bits/sec), 200 max dgrams in loop, 100 warmups, 292 quits, 90724 ooo, 90759 loss (1.65%)
+
+
+========================================
+
+Forwarder.
+
+$ EF_POLL_USEC=-1 EF_SPIN_USEC=-1 EF_RXQ_SIZE=4096 taskset -c 4 onload ./mforwarder -l 4000 -m 200 -r 19000000 -n 5500000 -w 10 239.101.3.1 12000 `ifconfig | sed -n 's/^  *inet \(10.29.4.[0-9]*\)  *netmask.*/\1/p'`

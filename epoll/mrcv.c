@@ -162,7 +162,6 @@ void get_parms(int argc, char **argv)
 
 void process_datagram(uint32_t *buffer, int len)
 {
-  clock_gettime(CLOCK_MONOTONIC, &last_pkt_ts);
   if (o_v_bitmask & 1) {
     printf("Process datagram, size=%d, type=%d sqn=%10u\n",
            (int)len, buffer[0], buffer[1]);
@@ -172,7 +171,7 @@ void process_datagram(uint32_t *buffer, int len)
     num_msgs = 0;
     num_warmups++;
     if (state == STATE_INIT) {
-      clock_gettime(CLOCK_MONOTONIC, &start_ts);
+      start_ts = last_pkt_ts;
     }
   }
   else if (buffer[0] == 1) {
@@ -306,17 +305,21 @@ int main(int argc, char **argv)
   while (!quit) {
     int nfds, ev;
 
-    CHKERR(nfds = epoll_wait(epollfd, events, 100, o_wait_ms));  /* No wait. */
+    CHKERR(nfds = epoll_wait(epollfd, events, 100, o_wait_ms));
 
-    /* If it's been > 100 ms since last packet, quit. */
-    if (nfds == 0 && state != STATE_INIT) {
-      struct timespec timeout_ts;
-      int64_t ns_since_last_pkt;
-      clock_gettime(CLOCK_MONOTONIC, &timeout_ts);
-      DIFF_TS(ns_since_last_pkt, timeout_ts, last_pkt_ts);
-      if (ns_since_last_pkt > linger_ns) {
-        quit = 1;
+    if (nfds == 0) {
+      if (state != STATE_INIT) {
+        /* Nothing received (timeout). If it's been a while, quit. */
+        struct timespec timeout_ts;
+        int64_t ns_since_last_pkt;
+        clock_gettime(CLOCK_MONOTONIC, &timeout_ts);
+        DIFF_TS(ns_since_last_pkt, timeout_ts, last_pkt_ts);
+        if (ns_since_last_pkt > linger_ns) {
+          quit = 1;
+        }
       }
+    } else {  /* nfds > 0 */
+      clock_gettime(CLOCK_MONOTONIC, &last_pkt_ts);
     }
 
     for (ev = 0; ev < nfds; ++ev) {
