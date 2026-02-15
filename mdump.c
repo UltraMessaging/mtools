@@ -550,7 +550,7 @@ int main(int argc, char **argv)
 					printf("%s %s.%d %d bytes:\n",
 							format_time(&tv), inet_ntoa(src.sin_addr),
 							ntohs(src.sin_port), cur_size);
-					dump(stdout, buff, cur_size);
+					dump(o_output, buff, cur_size);
 				}
 			}
 		}
